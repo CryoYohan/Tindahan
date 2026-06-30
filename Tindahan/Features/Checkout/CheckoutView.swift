@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 
+// Temporary cart item struct
 struct CartItem: Identifiable {
     let id = UUID()
     var product: Product
@@ -9,12 +10,16 @@ struct CartItem: Identifiable {
 
 struct CheckoutView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Product.name) private var products: [Product]
     
-    // The temporary cart state
+    @Query(sort: \Product.name) private var products: [Product]
+    @Query(sort: \Customer.name) private var customers: [Customer]
+    
     @State private var cart: [CartItem] = []
     
-    // Computed property to calculate the cart's running total
+    // New States for Utang Tracking
+    @State private var selectedCustomer: Customer? = nil
+    @State private var isPaid: Bool = true
+    
     var cartTotal: Double {
         cart.reduce(0) { $0 + ($1.product.sellingPrice * Double($1.quantity)) }
     }
@@ -22,7 +27,7 @@ struct CheckoutView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // TOP: Inventory List to tap and add to cart
+                // TOP: Inventory List
                 List(products) { product in
                     HStack {
                         VStack(alignment: .leading) {
@@ -39,13 +44,13 @@ struct CheckoutView: View {
                                 .foregroundColor(.blue)
                                 .font(.title2)
                         }
-                        .buttonStyle(.plain) // Prevents the whole row from acting as a button
+                        .buttonStyle(.plain)
                     }
                 }
                 
-                // BOTTOM: Cart Summary & Checkout Button
+                // BOTTOM: Cart Summary & Checkout
                 if !cart.isEmpty {
-                    VStack {
+                    VStack(spacing: 12) {
                         Divider()
                         
                         // Cart Preview
@@ -61,7 +66,24 @@ struct CheckoutView: View {
                             }
                             .padding(.horizontal)
                         }
-                        .padding(.top, 8)
+                        
+                        // NEW: Customer & Payment Options
+                        HStack {
+                            Picker("Customer", selection: $selectedCustomer) {
+                                Text("Walk-in").tag(Customer?(nil))
+                                ForEach(customers) { customer in
+                                    Text(customer.name).tag(Customer?(customer))
+                                }
+                            }
+                            .tint(.blue)
+                            
+                            Spacer()
+                            
+                            Toggle(isPaid ? "Paid" : "Utang", isOn: $isPaid)
+                                .toggleStyle(.button)
+                                .tint(isPaid ? .green : .red)
+                        }
+                        .padding(.horizontal)
                         
                         // Totals and Action
                         HStack {
@@ -84,7 +106,8 @@ struct CheckoutView: View {
                                     .cornerRadius(12)
                             }
                         }
-                        .padding()
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
                     }
                     .background(Color(UIColor.systemBackground).shadow(radius: 5))
                 }
@@ -96,7 +119,6 @@ struct CheckoutView: View {
     // MARK: - Logic Functions
     
     private func addToCart(product: Product) {
-        // If it's already in the cart, increase quantity. Otherwise, add new.
         if let index = cart.firstIndex(where: { $0.product.id == product.id }) {
             cart[index].quantity += 1
         } else {
@@ -108,30 +130,31 @@ struct CheckoutView: View {
         var totalAmount: Double = 0
         var totalProfit: Double = 0
         
-        // 1. Create the master Sale receipt
-        let newSale = Sale(date: Date(), isPaid: true, totalAmount: 0, totalProfit: 0)
+        // 1. Create the Sale receipt, attaching the payment status and customer
+        let newSale = Sale(date: Date(), isPaid: isPaid, totalAmount: 0, totalProfit: 0)
+        newSale.customer = selectedCustomer
         
-        // 2. Loop through the cart to create locked-in SaleItems and deduct stock
+        // 2. Process items
         for cartItem in cart {
             let saleItem = SaleItem(product: cartItem.product, quantitySold: cartItem.quantity)
-            saleItem.sale = newSale // Link it to the receipt
+            saleItem.sale = newSale
             
-            // Deduct the physical stock in the database
             cartItem.product.stockQuantity -= cartItem.quantity
             
-            // Tally the totals using the locked-in snapshot prices
             totalAmount += (saleItem.sellingPriceAtSale * Double(cartItem.quantity))
             totalProfit += saleItem.itemProfit
         }
         
-        // 3. Finalize the receipt totals
+        // 3. Finalize totals
         newSale.totalAmount = totalAmount
         newSale.totalProfit = totalProfit
         
         // 4. Save to SwiftData
         modelContext.insert(newSale)
         
-        // 5. Clear the UI for the next customer
+        // 5. Reset the UI for the next transaction
         cart.removeAll()
+        selectedCustomer = nil
+        isPaid = true
     }
 }

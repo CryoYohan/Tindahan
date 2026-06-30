@@ -3,7 +3,6 @@ import SwiftUI
 // Temporary placeholders so the app compiles.
 // We will replace these with real files as we build them.
 struct ScannerContainerView: View { var body: some View { Text("CV Scanner") } }
-struct UtangView: View { var body: some View { Text("Customer Credit (Utang)") } }
 
 struct MainTabView: View {
     var body: some View {
@@ -22,6 +21,11 @@ struct MainTabView: View {
             ScannerContainerView()
                 .tabItem {
                     Label("Scan", systemImage: "barcode.viewfinder")
+                }
+            
+            CheckoutView()
+                .tabItem {
+                    Label("Checkout", systemImage: "cart.fill")
                 }
             
             UtangView()
