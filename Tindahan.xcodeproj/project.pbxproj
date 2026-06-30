@@ -10,9 +10,22 @@
 		F12E92262FF371DA00798285 /* Tindahan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tindahan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F12E92702FF3A4C300798285 /* Exceptions for "Tindahan" folder in "Tindahan" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F12E92252FF371DA00798285 /* Tindahan */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F12E92282FF371DA00798285 /* Tindahan */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F12E92702FF3A4C300798285 /* Exceptions for "Tindahan" folder in "Tindahan" target */,
+			);
 			path = Tindahan;
 			sourceTree = "<group>";
 		};
@@ -254,6 +267,8 @@
 				DEVELOPMENT_TEAM = PR25KAK965;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Tindahan/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Tindahan needs camera access to quickly scan product barcodes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -286,6 +301,8 @@
 				DEVELOPMENT_TEAM = PR25KAK965;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Tindahan/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Tindahan needs camera access to quickly scan product barcodes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

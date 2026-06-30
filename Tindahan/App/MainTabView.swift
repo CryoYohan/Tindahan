@@ -1,8 +1,5 @@
 import SwiftUI
 
-// Temporary placeholders so the app compiles.
-// We will replace these with real files as we build them.
-struct ScannerContainerView: View { var body: some View { Text("CV Scanner") } }
 
 struct MainTabView: View {
     var body: some View {
