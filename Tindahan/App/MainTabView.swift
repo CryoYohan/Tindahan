@@ -20,10 +20,6 @@ struct MainTabView: View {
                     Label("Scan", systemImage: "barcode.viewfinder")
                 }
             
-            BulkImportView()
-                .tabItem {
-                    Label("Import", systemImage: "doc.text.fill")
-                }
             
             CheckoutView()
                 .tabItem {
@@ -33,6 +29,11 @@ struct MainTabView: View {
             UtangView()
                 .tabItem {
                     Label("Utang", systemImage: "person.2.fill")
+                }
+            
+            BulkImportView()
+                .tabItem {
+                    Label("Import", systemImage: "doc.text.fill")
                 }
         }
         // This ensures the tabs look native and adapt to dark/light mode
