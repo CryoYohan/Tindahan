@@ -1,7 +1,6 @@
 import SwiftUI
 import SwiftData
 
-// Temporary cart item struct
 struct CartItem: Identifiable {
     let id = UUID()
     var product: Product
@@ -16,9 +15,15 @@ struct CheckoutView: View {
     
     @State private var cart: [CartItem] = []
     
-    // New States for Utang Tracking
+    // Utang Tracking States
     @State private var selectedCustomer: Customer? = nil
     @State private var isPaid: Bool = true
+    
+    // Scanner States
+    @State private var isShowingScanner = false
+    @State private var isScanning = false
+    @State private var showScanError = false
+    @State private var scanErrorMsg = ""
     
     var cartTotal: Double {
         cart.reduce(0) { $0 + ($1.product.sellingPrice * Double($1.quantity)) }
@@ -27,7 +32,7 @@ struct CheckoutView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // TOP: Inventory List
+                // TOP: Inventory List (Manual Add)
                 List(products) { product in
                     HStack {
                         VStack(alignment: .leading) {
@@ -67,7 +72,7 @@ struct CheckoutView: View {
                             .padding(.horizontal)
                         }
                         
-                        // NEW: Customer & Payment Options
+                        // Customer & Payment Options
                         HStack {
                             Picker("Customer", selection: $selectedCustomer) {
                                 Text("Walk-in").tag(Customer?(nil))
@@ -113,6 +118,38 @@ struct CheckoutView: View {
                 }
             }
             .navigationTitle("Point of Sale")
+            // NEW: Scanner Button in Toolbar
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        isScanning = true
+                        isShowingScanner = true
+                    }) {
+                        Image(systemName: "barcode.viewfinder")
+                            .font(.title3)
+                            .padding()
+                    }
+                }
+            }
+            // NEW: Scanner Sheet
+            .sheet(isPresented: $isShowingScanner) {
+                NavigationStack {
+                    BarcodeScannerView(onScanned: handleScan, isScanning: $isScanning)
+                        .navigationTitle("Scan Item")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Close") { isShowingScanner = false }
+                            }
+                        }
+                }
+            }
+            // NEW: Alert if barcode isn't in database
+            .alert("Item Not Found", isPresented: $showScanError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(scanErrorMsg)
+            }
         }
     }
     
@@ -126,15 +163,27 @@ struct CheckoutView: View {
         }
     }
     
+    // NEW: Search for scanned barcode and add to cart
+    private func handleScan(barcode: String) {
+        if let product = products.first(where: { $0.barcode == barcode && $0.barcode != "" }) {
+            // Item found! Add it and dismiss camera so the user sees the cart update
+            addToCart(product: product)
+            isShowingScanner = false
+        } else {
+            // Item not found! Dismiss camera and show error
+            isShowingScanner = false
+            scanErrorMsg = "No product found with barcode: \(barcode). Add it to Inventory first."
+            showScanError = true
+        }
+    }
+    
     private func completeCheckout() {
         var totalAmount: Double = 0
         var totalProfit: Double = 0
         
-        // 1. Create the Sale receipt, attaching the payment status and customer
         let newSale = Sale(date: Date(), isPaid: isPaid, totalAmount: 0, totalProfit: 0)
         newSale.customer = selectedCustomer
         
-        // 2. Process items
         for cartItem in cart {
             let saleItem = SaleItem(product: cartItem.product, quantitySold: cartItem.quantity)
             saleItem.sale = newSale
@@ -145,14 +194,11 @@ struct CheckoutView: View {
             totalProfit += saleItem.itemProfit
         }
         
-        // 3. Finalize totals
         newSale.totalAmount = totalAmount
         newSale.totalProfit = totalProfit
         
-        // 4. Save to SwiftData
         modelContext.insert(newSale)
         
-        // 5. Reset the UI for the next transaction
         cart.removeAll()
         selectedCustomer = nil
         isPaid = true
