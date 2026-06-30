@@ -20,6 +20,11 @@ struct MainTabView: View {
                     Label("Scan", systemImage: "barcode.viewfinder")
                 }
             
+            BulkImportView()
+                .tabItem {
+                    Label("Import", systemImage: "doc.text.fill")
+                }
+            
             CheckoutView()
                 .tabItem {
                     Label("Checkout", systemImage: "cart.fill")

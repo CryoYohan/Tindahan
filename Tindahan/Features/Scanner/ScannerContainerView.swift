@@ -4,6 +4,8 @@ import SwiftData
 struct ScannerContainerView: View {
     @Environment(\.modelContext) private var modelContext
     
+    @Query private var products: [Product]
+    
     @State private var scannedBarcode: String = ""
     @State private var matchedProduct: Product? = nil
     @State private var isScanning: Bool = true
@@ -96,11 +98,15 @@ struct ScannerContainerView: View {
     
     // Search the offline database for the scanned barcode
     private func handleScan(barcode: String) {
-        scannedBarcode = barcode
+        // 1. Tell SwiftUI to switch the UI from the camera feed to the results area
+        isScanning = false
         
-        let descriptor = FetchDescriptor<Product>(predicate: #Predicate { $0.barcode == barcode })
+        // 2. Clean the barcode of any invisible spaces or newlines
+        let cleanBarcode = barcode.trimmingCharacters(in: .whitespacesAndNewlines)
+        scannedBarcode = cleanBarcode
         
-        if let foundProduct = try? modelContext.fetch(descriptor).first {
+        // 3. Use the reliable array search instead of the SwiftData Predicate
+        if let foundProduct = products.first(where: { $0.barcode == cleanBarcode }) {
             matchedProduct = foundProduct
         } else {
             matchedProduct = nil
