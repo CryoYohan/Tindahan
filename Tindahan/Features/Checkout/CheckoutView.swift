@@ -15,11 +15,10 @@ struct CheckoutView: View {
     
     @State private var cart: [CartItem] = []
     
-    // Utang Tracking States
+    @State private var searchText: String = ""
     @State private var selectedCustomer: Customer? = nil
     @State private var isPaid: Bool = true
     
-    // Scanner States
     @State private var isShowingScanner = false
     @State private var isScanning = false
     @State private var showScanError = false
@@ -29,11 +28,23 @@ struct CheckoutView: View {
         cart.reduce(0) { $0 + ($1.product.sellingPrice * Double($1.quantity)) }
     }
     
+    var searchResults: [Product] {
+        if searchText.isEmpty {
+            return products
+        } else {
+            return products.filter { product in
+                let matchesName = product.name.localizedCaseInsensitiveContains(searchText)
+                let matchesBarcode = !product.barcode.isEmpty && product.barcode.localizedCaseInsensitiveContains(searchText)
+                return matchesName || matchesBarcode
+            }
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // TOP: Inventory List (Manual Add)
-                List(products) { product in
+                // TOP: Inventory List
+                List(searchResults) { product in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(product.name).font(.headline)
@@ -58,15 +69,25 @@ struct CheckoutView: View {
                     VStack(spacing: 12) {
                         Divider()
                         
-                        // Cart Preview
+                        // UPDATED: Interactive Cart Preview
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack {
                                 ForEach(cart) { item in
-                                    Text("\(item.quantity)x \(item.product.name)")
+                                    Button(action: {
+                                        removeFromCart(item: item)
+                                    }) {
+                                        HStack(spacing: 6) {
+                                            Text("\(item.quantity)x \(item.product.name)")
+                                            Image(systemName: "xmark")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
                                         .background(Color.blue.opacity(0.1))
                                         .cornerRadius(8)
+                                        .foregroundColor(.primary)
+                                    }
                                 }
                             }
                             .padding(.horizontal)
@@ -90,7 +111,7 @@ struct CheckoutView: View {
                         }
                         .padding(.horizontal)
                         
-                        // Totals and Action
+                        // Totals and Actions
                         HStack {
                             VStack(alignment: .leading) {
                                 Text("Total:")
@@ -101,6 +122,16 @@ struct CheckoutView: View {
                             }
                             
                             Spacer()
+                            
+                            // NEW: Clear Cart Button
+                            Button(action: clearCart) {
+                                Image(systemName: "trash")
+                                    .font(.title3)
+                                    .foregroundColor(.red)
+                                    .frame(width: 50, height: 50)
+                                    .background(Color.red.opacity(0.1))
+                                    .cornerRadius(12)
+                            }
                             
                             Button(action: completeCheckout) {
                                 Text("Checkout")
@@ -118,7 +149,7 @@ struct CheckoutView: View {
                 }
             }
             .navigationTitle("Point of Sale")
-            // NEW: Scanner Button in Toolbar
+            .searchable(text: $searchText, prompt: "Search name or SKU (e.g. EGG)")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
@@ -131,7 +162,6 @@ struct CheckoutView: View {
                     }
                 }
             }
-            // NEW: Scanner Sheet
             .sheet(isPresented: $isShowingScanner) {
                 NavigationStack {
                     BarcodeScannerView(onScanned: handleScan, isScanning: $isScanning)
@@ -144,7 +174,6 @@ struct CheckoutView: View {
                         }
                 }
             }
-            // NEW: Alert if barcode isn't in database
             .alert("Item Not Found", isPresented: $showScanError) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -161,16 +190,32 @@ struct CheckoutView: View {
         } else {
             cart.append(CartItem(product: product, quantity: 1))
         }
+        searchText = ""
     }
     
-    // NEW: Search for scanned barcode and add to cart
+    // NEW: Decrease quantity by 1, or remove entirely if quantity hits 0
+    private func removeFromCart(item: CartItem) {
+        if let index = cart.firstIndex(where: { $0.id == item.id }) {
+            if cart[index].quantity > 1 {
+                cart[index].quantity -= 1
+            } else {
+                cart.remove(at: index)
+            }
+        }
+    }
+    
+    // NEW: Clear the entire cart and reset the UI
+    private func clearCart() {
+        cart.removeAll()
+        selectedCustomer = nil
+        isPaid = true
+    }
+    
     private func handleScan(barcode: String) {
         if let product = products.first(where: { $0.barcode == barcode && $0.barcode != "" }) {
-            // Item found! Add it and dismiss camera so the user sees the cart update
             addToCart(product: product)
             isShowingScanner = false
         } else {
-            // Item not found! Dismiss camera and show error
             isShowingScanner = false
             scanErrorMsg = "No product found with barcode: \(barcode). Add it to Inventory first."
             showScanError = true
@@ -199,8 +244,7 @@ struct CheckoutView: View {
         
         modelContext.insert(newSale)
         
-        cart.removeAll()
-        selectedCustomer = nil
-        isPaid = true
+        // Reuse the new function to quickly clear the state after a successful transaction
+        clearCart()
     }
 }
