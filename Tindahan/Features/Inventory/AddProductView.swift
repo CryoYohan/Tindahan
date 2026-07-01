@@ -16,7 +16,19 @@ struct AddProductView: View {
     @State private var isShowingScanner = false
     @State private var isScanning = false
     
-    let categories = ["Snacks", "Beverages", "Canned Goods", "Toiletries", "Milk, Coffee,& etc.", "Cooking Essentials","Cigars","Other"]
+    let categories = [
+        "Snacks",
+        "Beverages & Liquor",
+        "Instant Noodles",
+        "Canned Goods",
+        "Rice & Eggs",
+        "Cooking Essentials",
+        "Milk, Coffee, & etc.",
+        "Toiletries",
+        "Laundry & Cleaning",
+        "Cigarettes & Lighters",
+        "Other"
+    ]
     
     var body: some View {
         NavigationStack {

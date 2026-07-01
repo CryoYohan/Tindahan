@@ -204,7 +204,7 @@ struct CheckoutView: View {
         }
     }
     
-    // NEW: Clear the entire cart and reset the UI
+    // Clear the entire cart and reset the UI
     private func clearCart() {
         cart.removeAll()
         selectedCustomer = nil
