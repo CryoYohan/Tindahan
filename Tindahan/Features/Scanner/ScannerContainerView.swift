@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AudioToolbox
 
 struct ScannerContainerView: View {
     @Environment(\.modelContext) private var modelContext
@@ -107,8 +108,12 @@ struct ScannerContainerView: View {
         
         // 3. Use the reliable array search instead of the SwiftData Predicate
         if let foundProduct = products.first(where: { $0.barcode == cleanBarcode }) {
+            // Play a native system beep sound (1256 is a standard short beep)
+            AudioServicesPlaySystemSound(1256)
             matchedProduct = foundProduct
         } else {
+            // Play an error/vibration sound (1053)
+            AudioServicesPlaySystemSound(1053)
             matchedProduct = nil
         }
     }

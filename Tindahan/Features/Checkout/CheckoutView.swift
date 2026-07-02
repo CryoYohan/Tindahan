@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AudioToolbox
 
 struct CartItem: Identifiable {
     let id = UUID()
@@ -213,9 +214,15 @@ struct CheckoutView: View {
     
     private func handleScan(barcode: String) {
         if let product = products.first(where: { $0.barcode == barcode && $0.barcode != "" }) {
+            // Play a native system beep sound (1256 is a standard short beep)
+            AudioServicesPlaySystemSound(1256)
+            
             addToCart(product: product)
             isShowingScanner = false
         } else {
+            // Play an error/vibration sound (1053)
+            AudioServicesPlaySystemSound(1053)
+            
             isShowingScanner = false
             scanErrorMsg = "No product found with barcode: \(barcode). Add it to Inventory first."
             showScanError = true

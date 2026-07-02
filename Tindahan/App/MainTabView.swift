@@ -35,6 +35,14 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Import", systemImage: "doc.text.fill")
                 }
+            ReportsView()
+                .tabItem {
+                    Label("Reports", systemImage: "chart.pie.fill")
+                }
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
         }
         // This ensures the tabs look native and adapt to dark/light mode
         .tint(.blue)

@@ -6,6 +6,9 @@ struct DashboardView: View {
     // Fetch all sales, sorted by newest first
     @Query(sort: \Sale.date, order: .reverse) private var allSales: [Sale]
     
+    // 1. ADD THE APPSTORAGE HERE: Right below your other variables
+    @AppStorage("userName") private var userName: String = ""
+    
     // Aggregation: Today's snapshot
     var todaysSales: [Sale] {
         allSales.filter { Calendar.current.isDateInToday($0.date) }
@@ -42,6 +45,15 @@ struct DashboardView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    Text(userName.isEmpty ? "Welcome to Tindahan!" : "Hi, \(userName)!")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 8, trailing: 20))
+                }
+                
                 // Top KPI Cards
                 Section {
                     HStack {
